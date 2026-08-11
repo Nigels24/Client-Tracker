@@ -4,6 +4,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Log
+
+When the user asks to update the project log / summarize what we built / record today's work, append a new dated entry to `PROJECT_LOG.md` summarizing the session. Do this **only when asked or after a clearly-completed chunk of work** — not unprompted after every small change. Each entry is a reverse-chronological bullet summary of what changed and why, with key files mentioned.
+
 ## Commands
 
 ```bash
