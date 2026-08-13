@@ -9,6 +9,8 @@ import {
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_STYLES,
   formatPeso,
+  myIncome,
+  partnerCut,
   paymentStatus,
   totalPaid,
   totalPrice,
@@ -27,6 +29,9 @@ export default function ClientCard({ client }: { client: Client }) {
   const payStatus = paymentStatus(client);
   const schooling = [client.school, client.course].filter(Boolean).join(" · ");
 
+  const [firstMember, ...otherMembers] = client.members;
+  const sharedWithPartner = partnerCut(client) > 0;
+
   return (
     <Link
       href={`/clients/${client.id}`}
@@ -37,8 +42,13 @@ export default function ClientCard({ client }: { client: Client }) {
         <Chip status={client.status} />
       </div>
 
-      {client.name && (
-        <p className="mt-1 text-sm text-muted">{client.name}</p>
+      {firstMember && (
+        <p className="mt-1 text-sm text-muted">
+          {firstMember.name}
+          {otherMembers.length > 0 && (
+            <span className="text-muted"> +{otherMembers.length} more</span>
+          )}
+        </p>
       )}
       {schooling && (
         <p className="mt-0.5 text-xs text-muted">{schooling}</p>
@@ -58,10 +68,21 @@ export default function ClientCard({ client }: { client: Client }) {
       </div>
 
       {price > 0 && (
-        <p className="mt-3 text-sm text-foreground">
-          <span className="font-semibold">{formatPeso(totalPaid(client))}</span>
-          <span className="text-muted"> / {formatPeso(price)}</span>
-        </p>
+        <div className="mt-3 text-sm">
+          <p className="text-foreground">
+            <span className="font-semibold">{formatPeso(totalPaid(client))}</span>
+            <span className="text-muted"> / {formatPeso(price)}</span>
+          </p>
+          {/* Only worth saying when a partner's cut makes the two differ. */}
+          {sharedWithPartner && (
+            <p className="mt-0.5 text-xs text-muted">
+              Yours{" "}
+              <span className="font-medium text-foreground">
+                {formatPeso(myIncome(client))}
+              </span>
+            </p>
+          )}
+        </div>
       )}
 
       <div className="mt-4 space-y-1.5">

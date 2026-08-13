@@ -39,6 +39,11 @@ type PricedClient = {
   docuPrice: number | null;
 };
 
+type PartneredClient = PricedClient & {
+  partnerName: string | null;
+  partnerSharePercent: number;
+};
+
 type PaidClient = {
   payments: { amount: number }[];
 };
@@ -79,4 +84,80 @@ export function paidProgress(client: PricedClient & PaidClient) {
   const price = totalPrice(client);
   if (price <= 0) return 0;
   return Math.min(100, Math.round((totalPaid(client) / price) * 100));
+}
+
+/* ------------------------------------------------------------------ *
+ * Partner share
+ *
+ * Whoever refers a client takes a cut of the SYSTEM price only — docu
+ * work is always kept in full.
+ * ------------------------------------------------------------------ */
+
+function systemPriceOf(client: PricedClient) {
+  return hasSystem(client.projectType) ? client.systemPrice ?? 0 : 0;
+}
+
+function docuPriceOf(client: PricedClient) {
+  return hasDocu(client.projectType) ? client.docuPrice ?? 0 : 0;
+}
+
+/** What the referring partner is owed. No partner name means no cut. */
+export function partnerCut(client: PartneredClient) {
+  if (!client.partnerName || client.partnerSharePercent <= 0) return 0;
+  return Math.round((systemPriceOf(client) * client.partnerSharePercent) / 100);
+}
+
+/**
+ * Your half of the system price. Derived by subtraction, so your share and the
+ * partner's always add back to the system price exactly — never off by a peso.
+ */
+export function myIncomeSystem(client: PartneredClient) {
+  return systemPriceOf(client) - partnerCut(client);
+}
+
+/** Docu work is never shared. */
+export function myIncomeDocu(client: PricedClient) {
+  return docuPriceOf(client);
+}
+
+/** Everything this client is worth to you once fully paid. */
+export function myIncome(client: PartneredClient) {
+  return myIncomeSystem(client) + myIncomeDocu(client);
+}
+
+/* ------------------------------------------------------------------ *
+ * Splitting money across system vs docu
+ *
+ * Payments aren't earmarked, so they're split in proportion to the two
+ * prices. System is computed by ratio, then docu takes the remainder —
+ * that way the two halves always add back to the real figure.
+ * ------------------------------------------------------------------ */
+
+export type ProjectPart = "system" | "docu";
+
+export function paidToward(
+  client: PricedClient & PaidClient,
+  part: ProjectPart
+) {
+  const price = totalPrice(client);
+  if (price <= 0) return 0;
+
+  // Never allocate more than the contract is worth, even after an overpayment.
+  const paid = Math.min(totalPaid(client), price);
+  const towardSystem = Math.round((paid * systemPriceOf(client)) / price);
+  return part === "system" ? towardSystem : paid - towardSystem;
+}
+
+export function owedFor(client: PricedClient & PaidClient, part: ProjectPart) {
+  const price = part === "system" ? systemPriceOf(client) : docuPriceOf(client);
+  return Math.max(0, price - paidToward(client, part));
+}
+
+/** Of the money actually collected, the portion that ends up yours. */
+export function myCollected(client: PartneredClient & PaidClient) {
+  const price = totalPrice(client);
+  if (price <= 0) return 0;
+
+  const collected = Math.min(totalPaid(client), price);
+  return Math.round((collected * myIncome(client)) / price);
 }

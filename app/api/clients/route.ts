@@ -5,8 +5,10 @@ import { clientInclude } from "@/lib/client-include";
 import {
   enumValue,
   optionalDate,
+  optionalPercent,
   optionalPeso,
   optionalText,
+  parseMembers,
   requiredText,
   respondToError,
 } from "@/lib/validation";
@@ -47,11 +49,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
+    const partnerName = optionalText(body.partnerName, "Partner name");
+    const members = body.members === undefined ? [] : parseMembers(body.members);
+
     const client = await prisma.client.create({
       data: {
         userId: session.userId,
         title: requiredText(body.title, "Project title"),
-        name: optionalText(body.name, "Client name"),
         school: optionalText(body.school, "School"),
         course: optionalText(body.course, "Course"),
         notes: optionalText(body.notes, "Notes"),
@@ -61,8 +65,14 @@ export async function POST(request: NextRequest) {
             : enumValue(body.projectType, PROJECT_TYPE, "project type"),
         systemPrice: optionalPeso(body.systemPrice, "System price"),
         docuPrice: optionalPeso(body.docuPrice, "Docu price"),
+        partnerName,
+        // A percentage without a partner would be a share owed to nobody.
+        partnerSharePercent: partnerName
+          ? optionalPercent(body.partnerSharePercent, "Partner share")
+          : 0,
         systemDueDate: optionalDate(body.systemDueDate, "System deadline"),
         docuDueDate: optionalDate(body.docuDueDate, "Docu deadline"),
+        members: { create: members },
       },
       include: clientInclude,
     });

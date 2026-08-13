@@ -5,10 +5,13 @@ import { clientInclude } from "@/lib/client-include";
 import {
   enumValue,
   optionalDate,
+  optionalPercent,
   optionalPeso,
   optionalText,
+  parseMembers,
   requiredText,
   respondToError,
+  type ParsedMember,
 } from "@/lib/validation";
 import { PROJECT_TYPE, WORK_STATUS } from "@prisma/client";
 
@@ -65,7 +68,6 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
     const body = await request.json();
     const data: {
       title?: string;
-      name?: string | null;
       school?: string | null;
       course?: string | null;
       notes?: string | null;
@@ -73,15 +75,14 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
       status?: WORK_STATUS;
       systemPrice?: number | null;
       docuPrice?: number | null;
+      partnerName?: string | null;
+      partnerSharePercent?: number;
       systemDueDate?: Date | null;
       docuDueDate?: Date | null;
     } = {};
 
     if (body.title !== undefined) {
       data.title = requiredText(body.title, "Project title");
-    }
-    if (body.name !== undefined) {
-      data.name = optionalText(body.name, "Client name");
     }
     if (body.school !== undefined) {
       data.school = optionalText(body.school, "School");
@@ -110,11 +111,45 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
     if (body.docuDueDate !== undefined) {
       data.docuDueDate = optionalDate(body.docuDueDate, "Docu deadline");
     }
+    if (body.partnerName !== undefined) {
+      data.partnerName = optionalText(body.partnerName, "Partner name");
+    }
+    if (body.partnerSharePercent !== undefined) {
+      data.partnerSharePercent = optionalPercent(
+        body.partnerSharePercent,
+        "Partner share"
+      );
+    }
 
-    const client = await prisma.client.update({
-      where: { id: clientId },
-      data,
-      include: clientInclude,
+    // A share owed to nobody is meaningless — clearing the partner clears it.
+    const partnerAfterUpdate =
+      data.partnerName !== undefined ? data.partnerName : existing.partnerName;
+    if (!partnerAfterUpdate) {
+      data.partnerSharePercent = 0;
+    }
+
+    let members: ParsedMember[] | undefined;
+    if (body.members !== undefined) {
+      members = parseMembers(body.members);
+    }
+
+    // The member list is replaced wholesale rather than diffed; the update and
+    // the replacement share a transaction so a failure can't leave a client
+    // with no members at all.
+    const client = await prisma.$transaction(async (tx) => {
+      if (members) {
+        await tx.clientMember.deleteMany({ where: { clientId } });
+        if (members.length > 0) {
+          await tx.clientMember.createMany({
+            data: members.map((member) => ({ ...member, clientId })),
+          });
+        }
+      }
+      return tx.client.update({
+        where: { id: clientId },
+        data,
+        include: clientInclude,
+      });
     });
 
     return NextResponse.json({ message: "Client updated.", data: client });

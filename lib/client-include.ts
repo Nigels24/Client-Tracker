@@ -20,6 +20,7 @@ export const documentSelect = {
 } as const;
 
 export const clientInclude = {
+  members: { orderBy: { position: "asc" } },
   tasks: { orderBy: { position: "asc" } },
   payments: { orderBy: { paidAt: "desc" } },
   documents: { orderBy: { createdAt: "desc" }, select: documentSelect },

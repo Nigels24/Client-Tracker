@@ -53,6 +53,16 @@ export function requiredPeso(value: unknown, field: string): number {
   return amount;
 }
 
+/** A whole percentage, 0-100. */
+export function optionalPercent(value: unknown, field: string): number {
+  if (value === null || value === undefined || value === "") return 0;
+  const percent = typeof value === "number" ? value : Number(value);
+  if (!Number.isInteger(percent) || percent < 0 || percent > 100) {
+    throw new ValidationError(`${field} must be a whole number between 0 and 100.`);
+  }
+  return percent;
+}
+
 export function optionalDate(value: unknown, field: string): Date | null {
   if (value === null || value === undefined || value === "") return null;
   const date = new Date(value as string);
@@ -66,6 +76,36 @@ export function requiredDate(value: unknown, field: string): Date {
   const date = optionalDate(value, field);
   if (!date) throw new ValidationError(`${field} is required.`);
   return date;
+}
+
+export type ParsedMember = { name: string; contact: string | null; position: number };
+
+/**
+ * The client form always renders at least one blank member row, so a wholly
+ * empty row is silently dropped. A row with contact details but no name is a
+ * genuine mistake and is rejected rather than quietly discarded.
+ */
+export function parseMembers(value: unknown): ParsedMember[] {
+  if (!Array.isArray(value)) {
+    throw new ValidationError("Members must be a list.");
+  }
+  if (value.length > 20) {
+    throw new ValidationError("That's more than 20 members — is something wrong?");
+  }
+
+  const rows = value.map((entry) => (entry ?? {}) as { name?: unknown; contact?: unknown });
+
+  return rows
+    .filter((row) => {
+      const blankName = !String(row.name ?? "").trim();
+      const blankContact = !String(row.contact ?? "").trim();
+      return !(blankName && blankContact);
+    })
+    .map((row, index) => ({
+      name: requiredText(row.name, "Member name"),
+      contact: optionalText(row.contact, "Member contact"),
+      position: index,
+    }));
 }
 
 export function enumValue<T extends Record<string, string>>(

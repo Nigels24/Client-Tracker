@@ -4,6 +4,35 @@ A running record of work done on the Client Tracker application — features add
 
 ---
 
+## 2026-08-13 — Group members, partner shares, and an income-focused dashboard
+
+**What:** A client can now hold the whole group (3–4 students, each with a name and optional contact) instead of one name. Added a referring partner per client who takes a percentage of the **system** price, and reworked every money figure around what's actually *yours*: a "Your income" breakdown on each client, a "Yours" line on the card, and a six-tile dashboard split into income and outstanding money by System vs Thesis-Docu.
+
+**Why:** Thesis clients are groups, not individuals. And when a partner refers a client they take 25% of the system price — so a ₱20,000 system is really ₱15,000 to you. Every number in the app was gross, which meant none of them answered "how much do I actually earn from this?"
+
+**Files (key):**
+- `prisma/schema.prisma` — new `ClientMember` model; `Client` gains `partnerName` + `partnerSharePercent` and loses `name`.
+- `prisma/migrations/20260813231500_client_members_and_partner_share/migration.sql` — hand-written; any client whose `name` was filled in becomes that group's first member before the column is dropped.
+- `lib/money.ts` — `partnerCut`, `myIncomeSystem` / `myIncomeDocu` / `myIncome`, `paidToward`, `owedFor`, `myCollected`.
+- `lib/validation.ts` — `optionalPercent` and `parseMembers` (drops wholly blank rows, rejects a contact with no name).
+- `app/api/clients/**` — members created nested on POST and replaced wholesale inside a `$transaction` on PATCH; clearing the partner zeroes their share.
+- `features/clients/components/ClientFormFields.tsx` — `useFieldArray` members section, plus a partner section that shows the peso split live as you type.
+- `features/clients/components/MoneySummary.tsx` — rebuilt as six tiles; the old single "Still owed" tile is gone.
+- `features/payments/components/PaymentsPanel.tsx` — "Your income" breakdown above the existing totals.
+
+**Details:**
+- The partner's cut applies to the **system price only** — docu work is always kept in full.
+- Your share is derived by *subtracting* the partner's cut from the price, so the two always add back exactly; no peso is ever lost to rounding.
+- Payments aren't earmarked, so they're split between system and docu **in proportion to the two prices**. System is computed by ratio and docu takes the remainder, which guarantees "owed for system" + "owed for docu" always equals the client's real balance.
+- Income tiles are net of the partner; "still owed" tiles are gross (what clients hand over). The labels say which is which.
+- A client with no price set still shows no payment badge, unchanged from before.
+
+**Verified:** migration applied to a throwaway Postgres seeded with a named / a null / a whitespace-only client — only the real name became a member row, tasks and payments survived, no schema drift. 24 direct assertions over `lib/money.ts` including the ₱20,000 → ₱15,000/₱5,000 example, a rounding sweep proving cut + share always equals the price, and 183 payment amounts with zero split drift. API walkthrough: 4 members created (blank row dropped), edited down to 2 with no orphans, blank-name and 101% rejected with readable messages, cross-user PATCH still 404, cascade delete clears members. `npm run build` and `npm run lint` clean.
+
+**Deployed:** Not yet — needs `npx prisma migrate deploy` against Neon before the code is pushed.
+
+---
+
 ## 2026-08-13 — Client details, money tracking, and agreement uploads
 
 **What:** Turned a client from "a name, a note and one due date" into a full job record: separate project title and client name, school, course, project type (System / Thesis-Docu / Both), a price per deliverable, separate System and Docu deadlines, a payment history with computed balance, and an uploaded copy of the signed agreement. Added a money summary across the top of the dashboard and a Paid / Partial / Unpaid badge per client.

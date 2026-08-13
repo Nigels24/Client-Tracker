@@ -8,7 +8,11 @@ import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import AlertBanner from "@/components/ui/AlertBanner";
 import ClientFormFields from "@/features/clients/components/ClientFormFields";
-import { clientSchema, ClientFormValues } from "@/features/clients/schema/client.schema";
+import {
+  clientSchema,
+  toMemberInputs,
+  ClientFormValues,
+} from "@/features/clients/schema/client.schema";
 import { useUpdateClient } from "@/features/clients/hooks/use-clients";
 import type { Client } from "@/features/clients/types";
 
@@ -18,12 +22,21 @@ const toDateInput = (value: string | null) =>
 function toFormValues(client: Client): ClientFormValues {
   return {
     title: client.title,
-    name: client.name ?? "",
+    // Always leave one row so there's somewhere to type.
+    members:
+      client.members.length > 0
+        ? client.members.map((member) => ({
+            name: member.name,
+            contact: member.contact ?? "",
+          }))
+        : [{ name: "", contact: "" }],
     school: client.school ?? "",
     course: client.course ?? "",
     projectType: client.projectType,
     systemPrice: client.systemPrice ?? undefined,
     docuPrice: client.docuPrice ?? undefined,
+    partnerName: client.partnerName ?? "",
+    partnerSharePercent: client.partnerSharePercent,
     systemDueDate: toDateInput(client.systemDueDate),
     docuDueDate: toDateInput(client.docuDueDate),
     notes: client.notes ?? "",
@@ -46,6 +59,8 @@ export default function EditClientModal({
     handleSubmit,
     reset,
     watch,
+    control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ClientFormValues>({
     resolver: yupResolver(clientSchema),
@@ -67,13 +82,15 @@ export default function EditClientModal({
   const onSubmit = async (values: ClientFormValues) => {
     await updateClient.mutateAsync({
       title: values.title,
-      name: values.name || null,
+      members: toMemberInputs(values.members),
       school: values.school || null,
       course: values.course || null,
       notes: values.notes || null,
       projectType: values.projectType,
       systemPrice: values.systemPrice ?? null,
       docuPrice: values.docuPrice ?? null,
+      partnerName: values.partnerName || null,
+      partnerSharePercent: values.partnerSharePercent,
       systemDueDate: values.systemDueDate || null,
       docuDueDate: values.docuDueDate || null,
     });
@@ -90,7 +107,13 @@ export default function EditClientModal({
         </div>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <ClientFormFields register={register} errors={errors} watch={watch} />
+        <ClientFormFields
+          register={register}
+          errors={errors}
+          watch={watch}
+          control={control}
+          setValue={setValue}
+        />
         <div className="flex justify-end gap-2 pt-2">
           <Button label="Cancel" variant="outline" onClick={handleClose} type="button" />
           <Button

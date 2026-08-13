@@ -10,7 +10,7 @@ import Badge from "@/components/ui/Badge";
 import SelectField from "@/components/ui/SelectField";
 import { STATUS_OPTIONS, clientDeadlines, isOverdue } from "@/lib/status";
 import { PROJECT_TYPE_LABELS, PROJECT_TYPE_STYLES, hasDocu, hasSystem } from "@/lib/project-type";
-import { formatPeso } from "@/lib/money";
+import { formatPeso, partnerCut } from "@/lib/money";
 import { useUpdateClient, useDeleteClient } from "@/features/clients/hooks/use-clients";
 import EditClientModal from "@/features/clients/components/EditClientModal";
 import type { Client } from "@/features/clients/types";
@@ -35,10 +35,12 @@ export default function ClientHeader({ client }: { client: Client }) {
   const showSystemPrice = hasSystem(client.projectType) && client.systemPrice !== null;
   const showDocuPrice = hasDocu(client.projectType) && client.docuPrice !== null;
   // Nothing filled in yet shouldn't leave an empty bordered strip.
+  const cut = partnerCut(client);
   const hasDetails =
     Boolean(client.school || client.course) ||
     showSystemPrice ||
     showDocuPrice ||
+    cut > 0 ||
     deadlines.length > 0;
 
   const handleDelete = async () => {
@@ -61,9 +63,25 @@ export default function ClientHeader({ client }: { client: Client }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-xl font-bold text-foreground">{client.title}</h1>
-          <p className="mt-1 text-sm text-muted">
-            {client.name || "No client name yet — add one with Edit"}
-          </p>
+          {client.members.length > 0 ? (
+            <ul className="mt-2 space-y-1">
+              {client.members.map((member, index) => (
+                <li key={member.id} className="text-sm">
+                  <span className="font-medium text-foreground">{member.name}</span>
+                  {index === 0 && (
+                    <span className="ml-2 text-xs text-muted">main contact</span>
+                  )}
+                  {member.contact && (
+                    <span className="ml-2 text-xs text-muted">{member.contact}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-sm text-muted">
+              No members yet — add them with Edit
+            </p>
+          )}
           <div className="mt-3">
             <Badge
               label={PROJECT_TYPE_LABELS[client.projectType]}
@@ -109,6 +127,12 @@ export default function ClientHeader({ client }: { client: Client }) {
           )}
           {showDocuPrice && (
             <Detail label="Docu price" value={formatPeso(client.docuPrice)} />
+          )}
+          {cut > 0 && (
+            <Detail
+              label={`Referred by ${client.partnerName}`}
+              value={`${client.partnerSharePercent}% · ${formatPeso(cut)}`}
+            />
           )}
           {deadlines.map((deadline) => {
             const overdue = isOverdue(deadline.date, client.status);

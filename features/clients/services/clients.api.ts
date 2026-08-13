@@ -22,15 +22,19 @@ export async function fetchClient(id: number) {
   return unwrap<Client>(response);
 }
 
+export type MemberInput = { name: string; contact?: string };
+
 export type CreateClientInput = {
   title: string;
-  name?: string;
+  members?: MemberInput[];
   school?: string;
   course?: string;
   notes?: string;
   projectType?: PROJECT_TYPE;
   systemPrice?: number;
   docuPrice?: number;
+  partnerName?: string;
+  partnerSharePercent?: number;
   systemDueDate?: string;
   docuDueDate?: string;
 };
@@ -46,7 +50,8 @@ export async function createClient(input: CreateClientInput) {
 
 export type UpdateClientInput = {
   title?: string;
-  name?: string | null;
+  /** Replaces the whole member list. */
+  members?: MemberInput[];
   school?: string | null;
   course?: string | null;
   notes?: string | null;
@@ -54,6 +59,8 @@ export type UpdateClientInput = {
   status?: WORK_STATUS;
   systemPrice?: number | null;
   docuPrice?: number | null;
+  partnerName?: string | null;
+  partnerSharePercent?: number;
   systemDueDate?: string | null;
   docuDueDate?: string | null;
 };

@@ -7,17 +7,24 @@ import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import AlertBanner from "@/components/ui/AlertBanner";
 import ClientFormFields from "@/features/clients/components/ClientFormFields";
-import { clientSchema, ClientFormValues } from "@/features/clients/schema/client.schema";
+import {
+  clientSchema,
+  toMemberInputs,
+  ClientFormValues,
+} from "@/features/clients/schema/client.schema";
 import { useCreateClient } from "@/features/clients/hooks/use-clients";
 
 const EMPTY_CLIENT: ClientFormValues = {
   title: "",
-  name: "",
+  // One blank row so the form invites a name without needing a click first.
+  members: [{ name: "", contact: "" }],
   school: "",
   course: "",
   projectType: PROJECT_TYPE.SYSTEM,
   systemPrice: undefined,
   docuPrice: undefined,
+  partnerName: "",
+  partnerSharePercent: 0,
   systemDueDate: "",
   docuDueDate: "",
   notes: "",
@@ -37,6 +44,8 @@ export default function AddClientModal({
     handleSubmit,
     reset,
     watch,
+    control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ClientFormValues>({
     resolver: yupResolver(clientSchema),
@@ -52,13 +61,15 @@ export default function AddClientModal({
   const onSubmit = async (values: ClientFormValues) => {
     await createClient.mutateAsync({
       title: values.title,
-      name: values.name || undefined,
+      members: toMemberInputs(values.members),
       school: values.school || undefined,
       course: values.course || undefined,
       notes: values.notes || undefined,
       projectType: values.projectType,
       systemPrice: values.systemPrice,
       docuPrice: values.docuPrice,
+      partnerName: values.partnerName || undefined,
+      partnerSharePercent: values.partnerSharePercent,
       systemDueDate: values.systemDueDate || undefined,
       docuDueDate: values.docuDueDate || undefined,
     });
@@ -75,7 +86,13 @@ export default function AddClientModal({
         </div>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <ClientFormFields register={register} errors={errors} watch={watch} />
+        <ClientFormFields
+          register={register}
+          errors={errors}
+          watch={watch}
+          control={control}
+          setValue={setValue}
+        />
         <div className="flex justify-end gap-2 pt-2">
           <Button label="Cancel" variant="outline" onClick={handleClose} type="button" />
           <Button
