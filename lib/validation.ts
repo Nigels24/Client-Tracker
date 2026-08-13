@@ -53,16 +53,6 @@ export function requiredPeso(value: unknown, field: string): number {
   return amount;
 }
 
-/** A whole percentage, 0-100. */
-export function optionalPercent(value: unknown, field: string): number {
-  if (value === null || value === undefined || value === "") return 0;
-  const percent = typeof value === "number" ? value : Number(value);
-  if (!Number.isInteger(percent) || percent < 0 || percent > 100) {
-    throw new ValidationError(`${field} must be a whole number between 0 and 100.`);
-  }
-  return percent;
-}
-
 export function optionalDate(value: unknown, field: string): Date | null {
   if (value === null || value === undefined || value === "") return null;
   const date = new Date(value as string);

@@ -23,8 +23,6 @@ const EMPTY_CLIENT: ClientFormValues = {
   projectType: PROJECT_TYPE.SYSTEM,
   systemPrice: undefined,
   docuPrice: undefined,
-  partnerName: "",
-  partnerSharePercent: 0,
   systemDueDate: "",
   docuDueDate: "",
   notes: "",
@@ -45,7 +43,6 @@ export default function AddClientModal({
     reset,
     watch,
     control,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ClientFormValues>({
     resolver: yupResolver(clientSchema),
@@ -68,8 +65,6 @@ export default function AddClientModal({
       projectType: values.projectType,
       systemPrice: values.systemPrice,
       docuPrice: values.docuPrice,
-      partnerName: values.partnerName || undefined,
-      partnerSharePercent: values.partnerSharePercent,
       systemDueDate: values.systemDueDate || undefined,
       docuDueDate: values.docuDueDate || undefined,
     });
@@ -91,7 +86,6 @@ export default function AddClientModal({
           errors={errors}
           watch={watch}
           control={control}
-          setValue={setValue}
         />
         <div className="flex justify-end gap-2 pt-2">
           <Button label="Cancel" variant="outline" onClick={handleClose} type="button" />

@@ -59,10 +59,6 @@ export type Client = {
   /** Whole pesos — see lib/money.ts. */
   systemPrice: number | null;
   docuPrice: number | null;
-  /** Who referred this client; null means the whole price is yours. */
-  partnerName: string | null;
-  /** Percent of the *system* price owed to that partner. */
-  partnerSharePercent: number;
   systemDueDate: string | null;
   docuDueDate: string | null;
   members: ClientMember[];

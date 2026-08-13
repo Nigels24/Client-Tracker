@@ -35,8 +35,6 @@ function toFormValues(client: Client): ClientFormValues {
     projectType: client.projectType,
     systemPrice: client.systemPrice ?? undefined,
     docuPrice: client.docuPrice ?? undefined,
-    partnerName: client.partnerName ?? "",
-    partnerSharePercent: client.partnerSharePercent,
     systemDueDate: toDateInput(client.systemDueDate),
     docuDueDate: toDateInput(client.docuDueDate),
     notes: client.notes ?? "",
@@ -60,7 +58,6 @@ export default function EditClientModal({
     reset,
     watch,
     control,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ClientFormValues>({
     resolver: yupResolver(clientSchema),
@@ -89,8 +86,6 @@ export default function EditClientModal({
       projectType: values.projectType,
       systemPrice: values.systemPrice ?? null,
       docuPrice: values.docuPrice ?? null,
-      partnerName: values.partnerName || null,
-      partnerSharePercent: values.partnerSharePercent,
       systemDueDate: values.systemDueDate || null,
       docuDueDate: values.docuDueDate || null,
     });
@@ -112,7 +107,6 @@ export default function EditClientModal({
           errors={errors}
           watch={watch}
           control={control}
-          setValue={setValue}
         />
         <div className="flex justify-end gap-2 pt-2">
           <Button label="Cancel" variant="outline" onClick={handleClose} type="button" />

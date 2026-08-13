@@ -9,8 +9,6 @@ import {
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_STYLES,
   formatPeso,
-  myIncome,
-  partnerCut,
   paymentStatus,
   totalPaid,
   totalPrice,
@@ -30,7 +28,6 @@ export default function ClientCard({ client }: { client: Client }) {
   const schooling = [client.school, client.course].filter(Boolean).join(" · ");
 
   const [firstMember, ...otherMembers] = client.members;
-  const sharedWithPartner = partnerCut(client) > 0;
 
   return (
     <Link
@@ -68,21 +65,10 @@ export default function ClientCard({ client }: { client: Client }) {
       </div>
 
       {price > 0 && (
-        <div className="mt-3 text-sm">
-          <p className="text-foreground">
-            <span className="font-semibold">{formatPeso(totalPaid(client))}</span>
-            <span className="text-muted"> / {formatPeso(price)}</span>
-          </p>
-          {/* Only worth saying when a partner's cut makes the two differ. */}
-          {sharedWithPartner && (
-            <p className="mt-0.5 text-xs text-muted">
-              Yours{" "}
-              <span className="font-medium text-foreground">
-                {formatPeso(myIncome(client))}
-              </span>
-            </p>
-          )}
-        </div>
+        <p className="mt-3 text-sm text-foreground">
+          <span className="font-semibold">{formatPeso(totalPaid(client))}</span>
+          <span className="text-muted"> / {formatPeso(price)}</span>
+        </p>
       )}
 
       <div className="mt-4 space-y-1.5">

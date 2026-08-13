@@ -53,11 +53,7 @@ This is a Next.js 16 App Router app — note the `@AGENTS.md` warning above: som
 
 **Money is whole pesos as `Int`** — DB column, API payload and form input alike. No centavos, no `Decimal`, no rounding. `lib/money.ts` owns every derived figure and only counts prices matching the client's `projectType`, so a Docu-only job ignores a stored `systemPrice` without erasing it. `lib/project-type.ts` mirrors `lib/status.ts` and exports the `hasSystem`/`hasDocu` predicates that gate prices, deadlines and form fields.
 
-Two invariants in `lib/money.ts` that new code must not break:
-- **The partner's cut applies to the system price only** (docu is never shared), and your share is derived by *subtracting* the cut — so `partnerCut + myIncomeSystem === systemPrice` exactly, with no peso lost to rounding.
-- **Payments are split system/docu in proportion to the two prices**, since nothing earmarks them. `paidToward("system")` rounds and `"docu"` takes the remainder, which guarantees `owedFor("system") + owedFor("docu") === balance()`. Compute derived money through these helpers rather than re-deriving ratios at the call site.
-
-Income figures (`myIncome*`, `myCollected`) are **net of the partner**; `owedFor`/`balance` are **gross** — what the client still hands over. Label any new UI accordingly; the dashboard tiles in `MoneySummary.tsx` do.
+All money figures are **gross** — what the client owes and has paid. A revenue-sharing feature (a referrer taking a cut of the system price) was built and then removed on 2026-08-13: the app is used by *both* parties, so netting out one side's share made every shared screen misleading. Don't reintroduce per-user net figures without solving that first; see `PROJECT_LOG.md` and commit `1550894`.
 
 **`Client.title` is the project; `Client.members` is the group** (`ClientMember`, ordered by `position`, index 0 = main contact). Members are edited as part of the client form, not a separate slice: `POST /api/clients` creates them nested and `PATCH` **replaces the list wholesale** inside a `$transaction` — there are no `/api/members` routes. Deadlines are split into `systemDueDate`/`docuDueDate`; `clientDeadlines`/`nextDeadline` in `lib/status.ts` pick the applicable ones.
 

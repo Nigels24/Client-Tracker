@@ -33,8 +33,6 @@ export type CreateClientInput = {
   projectType?: PROJECT_TYPE;
   systemPrice?: number;
   docuPrice?: number;
-  partnerName?: string;
-  partnerSharePercent?: number;
   systemDueDate?: string;
   docuDueDate?: string;
 };
@@ -59,8 +57,6 @@ export type UpdateClientInput = {
   status?: WORK_STATUS;
   systemPrice?: number | null;
   docuPrice?: number | null;
-  partnerName?: string | null;
-  partnerSharePercent?: number;
   systemDueDate?: string | null;
   docuDueDate?: string | null;
 };

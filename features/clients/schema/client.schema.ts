@@ -41,16 +41,6 @@ export const clientSchema = yup.object({
     .required("Pick what you're building."),
   systemPrice: optionalPeso,
   docuPrice: optionalPeso,
-  partnerName: yup.string().trim().optional(),
-  partnerSharePercent: yup
-    .number()
-    .transform((value, original) =>
-      original === "" || original === null || Number.isNaN(value) ? 0 : value
-    )
-    .integer("Use a whole percentage.")
-    .min(0, "Can't be less than 0%.")
-    .max(100, "Can't be more than 100%.")
-    .default(0),
   systemDueDate: yup.string().trim().optional(),
   docuDueDate: yup.string().trim().optional(),
   notes: yup.string().trim().optional(),

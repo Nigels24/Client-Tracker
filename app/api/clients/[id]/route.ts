@@ -5,7 +5,6 @@ import { clientInclude } from "@/lib/client-include";
 import {
   enumValue,
   optionalDate,
-  optionalPercent,
   optionalPeso,
   optionalText,
   parseMembers,
@@ -75,8 +74,6 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
       status?: WORK_STATUS;
       systemPrice?: number | null;
       docuPrice?: number | null;
-      partnerName?: string | null;
-      partnerSharePercent?: number;
       systemDueDate?: Date | null;
       docuDueDate?: Date | null;
     } = {};
@@ -111,23 +108,6 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
     if (body.docuDueDate !== undefined) {
       data.docuDueDate = optionalDate(body.docuDueDate, "Docu deadline");
     }
-    if (body.partnerName !== undefined) {
-      data.partnerName = optionalText(body.partnerName, "Partner name");
-    }
-    if (body.partnerSharePercent !== undefined) {
-      data.partnerSharePercent = optionalPercent(
-        body.partnerSharePercent,
-        "Partner share"
-      );
-    }
-
-    // A share owed to nobody is meaningless — clearing the partner clears it.
-    const partnerAfterUpdate =
-      data.partnerName !== undefined ? data.partnerName : existing.partnerName;
-    if (!partnerAfterUpdate) {
-      data.partnerSharePercent = 0;
-    }
-
     let members: ParsedMember[] | undefined;
     if (body.members !== undefined) {
       members = parseMembers(body.members);

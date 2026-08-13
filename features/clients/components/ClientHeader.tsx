@@ -10,7 +10,7 @@ import Badge from "@/components/ui/Badge";
 import SelectField from "@/components/ui/SelectField";
 import { STATUS_OPTIONS, clientDeadlines, isOverdue } from "@/lib/status";
 import { PROJECT_TYPE_LABELS, PROJECT_TYPE_STYLES, hasDocu, hasSystem } from "@/lib/project-type";
-import { formatPeso, partnerCut } from "@/lib/money";
+import { formatPeso } from "@/lib/money";
 import { useUpdateClient, useDeleteClient } from "@/features/clients/hooks/use-clients";
 import EditClientModal from "@/features/clients/components/EditClientModal";
 import type { Client } from "@/features/clients/types";
@@ -35,12 +35,10 @@ export default function ClientHeader({ client }: { client: Client }) {
   const showSystemPrice = hasSystem(client.projectType) && client.systemPrice !== null;
   const showDocuPrice = hasDocu(client.projectType) && client.docuPrice !== null;
   // Nothing filled in yet shouldn't leave an empty bordered strip.
-  const cut = partnerCut(client);
   const hasDetails =
     Boolean(client.school || client.course) ||
     showSystemPrice ||
     showDocuPrice ||
-    cut > 0 ||
     deadlines.length > 0;
 
   const handleDelete = async () => {
@@ -127,12 +125,6 @@ export default function ClientHeader({ client }: { client: Client }) {
           )}
           {showDocuPrice && (
             <Detail label="Docu price" value={formatPeso(client.docuPrice)} />
-          )}
-          {cut > 0 && (
-            <Detail
-              label={`Referred by ${client.partnerName}`}
-              value={`${client.partnerSharePercent}% · ${formatPeso(cut)}`}
-            />
           )}
           {deadlines.map((deadline) => {
             const overdue = isOverdue(deadline.date, client.status);

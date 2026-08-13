@@ -4,6 +4,29 @@ A running record of work done on the Client Tracker application — features add
 
 ---
 
+## 2026-08-13 — Removed the partner share; kept group members
+
+**What:** Stripped out the partner-share feature added earlier the same day — the referrer field, the percentage, and every "my income" figure derived from them. The dashboard is back to its four tiles (Total value, Collected, Still owed, Fully paid) and all money figures are plain gross amounts again. **Group members stayed**, untouched.
+
+**Why:** The feature assumed a single operator. It isn't — the friend who holds the 25% share uses this app too, so a dashboard silently netting out *one* side's cut was misleading on every shared screen. Rather than patch around it, the whole idea comes out until there's a design that works for both people at once.
+
+**Files:**
+- `prisma/schema.prisma` + `prisma/migrations/20260813234447_remove_partner_share/` — drops `partnerName` and `partnerSharePercent`. No client had ever set one, so nothing was lost.
+- `lib/money.ts` — removed `partnerCut`, `myIncomeSystem` / `myIncomeDocu` / `myIncome`, `paidToward`, `owedFor`, `myCollected` and the `ProjectPart` type. Back to the original eight exports.
+- `lib/validation.ts` — removed `optionalPercent`; `parseMembers` stays.
+- `app/api/clients/**`, `features/clients/{types,schema,services}` — partner fields gone from routes, types, yup schema and API inputs.
+- `ClientFormFields.tsx` (partner section and the percentage pre-fill), `ClientCard.tsx` ("Yours" line), `ClientHeader.tsx` ("Referred by" row), `PaymentsPanel.tsx` ("Your income" block), `MoneySummary.tsx` (back to four tiles).
+
+**Details:**
+- **Deploy order is reversed from the usual:** the live app still reads those columns, so the code must be pushed *first* and the migration run *after*. Dropping first would break production.
+- The removed code is recoverable from commit `1550894` if the idea returns in a form that accounts for both parties.
+
+**Verified:** all four migrations replayed on a throwaway Postgres seeded with clients, 4 members, a payment and a task — partner columns gone, **every member row intact with its contact and position**, nothing else touched, no schema drift. The original 18 `lib/money.ts` assertions pass and its exports are back to exactly the original eight. API walkthrough: members still create (blank row dropped) and replace wholesale with no orphans, blank-name still rejected, a stray `partnerName` in the body is harmlessly ignored, cross-user PATCH still 404s, cascade delete still clears members. Grep confirms no partner/income references remain outside the migration and this log. `npm run build` and `npm run lint` clean.
+
+**Deployed:** Not yet — push the code first, then `npx prisma migrate deploy`.
+
+---
+
 ## 2026-08-13 — Group members, partner shares, and an income-focused dashboard
 
 **What:** A client can now hold the whole group (3–4 students, each with a name and optional contact) instead of one name. Added a referring partner per client who takes a percentage of the **system** price, and reworked every money figure around what's actually *yours*: a "Your income" breakdown on each client, a "Yours" line on the card, and a six-tile dashboard split into income and outstanding money by System vs Thesis-Docu.

@@ -1,12 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import type {
-  FieldErrors,
-  UseFormRegister,
-  UseFormSetValue,
-  UseFormWatch,
-} from "react-hook-form";
+import type { FieldErrors, UseFormRegister, UseFormWatch } from "react-hook-form";
 import { useFieldArray, type Control } from "react-hook-form";
 import { Plus, X } from "lucide-react";
 import TextInput from "@/components/ui/TextInput";
@@ -14,11 +8,7 @@ import TextArea from "@/components/ui/TextArea";
 import DateInput from "@/components/ui/DateInput";
 import SelectField from "@/components/ui/SelectField";
 import { PROJECT_TYPE_OPTIONS, hasDocu, hasSystem } from "@/lib/project-type";
-import { formatPeso } from "@/lib/money";
 import type { ClientFormValues } from "@/features/clients/schema/client.schema";
-
-/** Pre-filled the moment a partner is named, since this is the usual deal. */
-const DEFAULT_PARTNER_PERCENT = 25;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -43,31 +33,14 @@ export default function ClientFormFields({
   errors,
   watch,
   control,
-  setValue,
 }: {
   register: UseFormRegister<ClientFormValues>;
   errors: FieldErrors<ClientFormValues>;
   watch: UseFormWatch<ClientFormValues>;
   control: Control<ClientFormValues>;
-  setValue: UseFormSetValue<ClientFormValues>;
 }) {
   const projectType = watch("projectType");
-  const partnerName = watch("partnerName");
-  const partnerPercent = Number(watch("partnerSharePercent")) || 0;
-  const systemPrice = Number(watch("systemPrice")) || 0;
-
   const { fields, append, remove } = useFieldArray({ control, name: "members" });
-
-  // Naming a partner without a share would silently mean "they get nothing".
-  useEffect(() => {
-    if (partnerName?.trim() && partnerPercent === 0) {
-      setValue("partnerSharePercent", DEFAULT_PARTNER_PERCENT);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [partnerName]);
-
-  const hasPartner = Boolean(partnerName?.trim()) && partnerPercent > 0;
-  const partnerCut = hasPartner ? Math.round((systemPrice * partnerPercent) / 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -177,47 +150,6 @@ export default function ClientFormFields({
           </div>
         )}
       </Section>
-
-      {hasSystem(projectType) && (
-        <Section title="Partner share">
-          <div className={TWO_COLUMN}>
-            <TextInput
-              label="Referred by"
-              placeholder="Leave empty if nobody referred them"
-              registration={register("partnerName")}
-              error={errors.partnerName}
-            />
-            <TextInput
-              label="Their share (%)"
-              type="number"
-              min={0}
-              max={100}
-              step={1}
-              helperText="Of the system price only — docu is always fully yours."
-              registration={register("partnerSharePercent", { valueAsNumber: true })}
-              error={errors.partnerSharePercent}
-            />
-          </div>
-          {hasPartner && systemPrice > 0 && (
-            <div className="rounded-xl border border-card-border bg-background p-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted">
-                  {partnerName?.trim()} gets {partnerPercent}% of the system price
-                </span>
-                <span className="font-medium text-foreground">
-                  {formatPeso(partnerCut)}
-                </span>
-              </div>
-              <div className="mt-1 flex justify-between">
-                <span className="text-muted">You keep</span>
-                <span className="font-semibold text-pay-paid-text">
-                  {formatPeso(systemPrice - partnerCut)}
-                </span>
-              </div>
-            </div>
-          )}
-        </Section>
-      )}
 
       <Section title="Notes">
         <TextArea

@@ -51,11 +51,6 @@ model Client {
   systemPrice Int?
   docuPrice   Int?
 
-  // Whoever referred this client takes `partnerSharePercent` of the SYSTEM
-  // price only — docu work is always kept in full. No name means no cut.
-  partnerName         String?
-  partnerSharePercent Int     @default(0)
-
   systemDueDate DateTime?
   docuDueDate   DateTime?
 

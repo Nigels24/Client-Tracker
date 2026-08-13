@@ -12,43 +12,12 @@ import {
   PAYMENT_STATUS_STYLES,
   balance,
   formatPeso,
-  myCollected,
-  myIncome,
-  myIncomeDocu,
-  myIncomeSystem,
   paidProgress,
-  partnerCut,
   paymentStatus,
   totalPaid,
   totalPrice,
 } from "@/lib/money";
-import { hasDocu, hasSystem } from "@/lib/project-type";
 import type { Client } from "@/features/clients/types";
-
-function Row({
-  label,
-  value,
-  muted = false,
-  strong = false,
-}: {
-  label: string;
-  value: string;
-  muted?: boolean;
-  strong?: boolean;
-}) {
-  return (
-    <div className="flex justify-between gap-3">
-      <span className={muted ? "text-muted" : "text-foreground"}>{label}</span>
-      <span
-        className={
-          strong ? "font-semibold text-foreground" : muted ? "text-muted" : "text-foreground"
-        }
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
 
 function Stat({
   label,
@@ -75,10 +44,6 @@ export default function PaymentsPanel({ client }: { client: Client }) {
   const remaining = balance(client);
   const status = paymentStatus(client);
 
-  const cut = partnerCut(client);
-  const showsSystem = hasSystem(client.projectType) && (client.systemPrice ?? 0) > 0;
-  const showsDocu = hasDocu(client.projectType) && (client.docuPrice ?? 0) > 0;
-
   const handleDelete = async (id: number, amount: number) => {
     if (!window.confirm(`Delete the ${formatPeso(amount)} payment?`)) return;
     await deletePayment.mutateAsync(id);
@@ -97,45 +62,6 @@ export default function PaymentsPanel({ client }: { client: Client }) {
           />
         )}
       </div>
-
-      {price > 0 && (
-        <div className="mb-5 rounded-xl border border-card-border bg-background p-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-            Your income
-          </p>
-          <div className="space-y-1.5 text-sm">
-            {showsSystem && (
-              <>
-                <Row label="System" value={formatPeso(client.systemPrice)} />
-                {cut > 0 && (
-                  <>
-                    <Row
-                      label={`${client.partnerName} (${client.partnerSharePercent}%)`}
-                      value={`−${formatPeso(cut)}`}
-                      muted
-                    />
-                    <Row label="Yours" value={formatPeso(myIncomeSystem(client))} muted />
-                  </>
-                )}
-              </>
-            )}
-            {showsDocu && (
-              <Row
-                label={cut > 0 ? "Thesis-Docu (all yours)" : "Thesis-Docu"}
-                value={formatPeso(myIncomeDocu(client))}
-              />
-            )}
-            <div className="border-t border-card-border pt-1.5">
-              <Row label="Your total" value={formatPeso(myIncome(client))} strong />
-            </div>
-            <Row
-              label="Collected so far (your share)"
-              value={formatPeso(myCollected(client))}
-              muted
-            />
-          </div>
-        </div>
-      )}
 
       {price > 0 ? (
         <div className="mb-5 space-y-3">
