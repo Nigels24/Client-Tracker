@@ -1,4 +1,4 @@
-import type { WORK_STATUS } from "@prisma/client";
+import type { PROJECT_TYPE, WORK_STATUS } from "@prisma/client";
 
 export type Task = {
   id: number;
@@ -12,14 +12,48 @@ export type Task = {
   updatedAt: string;
 };
 
+export type Payment = {
+  id: number;
+  clientId: number;
+  /** Whole pesos — see lib/money.ts. */
+  amount: number;
+  paidAt: string;
+  label: string | null;
+  method: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ClientDocument = {
+  id: number;
+  clientId: number;
+  label: string;
+  fileName: string;
+  mimeType: string;
+  /** Bytes. */
+  size: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Client = {
   id: number;
   userId: number;
-  name: string;
+  title: string;
+  name: string | null;
+  school: string | null;
+  course: string | null;
   notes: string | null;
+  projectType: PROJECT_TYPE;
   status: WORK_STATUS;
-  dueDate: string | null;
+  /** Whole pesos — see lib/money.ts. */
+  systemPrice: number | null;
+  docuPrice: number | null;
+  systemDueDate: string | null;
+  docuDueDate: string | null;
   tasks: Task[];
+  payments: Payment[];
+  documents: ClientDocument[];
   createdAt: string;
   updatedAt: string;
 };

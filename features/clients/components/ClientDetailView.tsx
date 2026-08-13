@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useClient } from "@/features/clients/hooks/use-clients";
 import ClientHeader from "@/features/clients/components/ClientHeader";
+import PaymentsPanel from "@/features/payments/components/PaymentsPanel";
+import AgreementPanel from "@/features/documents/components/AgreementPanel";
 import TaskList from "@/features/tasks/components/TaskList";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -32,6 +34,10 @@ export default function ClientDetailView({ clientId }: { clientId: number }) {
   return (
     <div className="space-y-6">
       <ClientHeader client={client} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <PaymentsPanel client={client} />
+        <AgreementPanel client={client} />
+      </div>
       <TaskList clientId={client.id} tasks={client.tasks} />
     </div>
   );

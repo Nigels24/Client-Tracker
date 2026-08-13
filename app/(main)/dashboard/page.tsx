@@ -6,6 +6,7 @@ import { useClients } from "@/features/clients/hooks/use-clients";
 import ClientCard from "@/features/clients/components/ClientCard";
 import AddClientModal from "@/features/clients/components/AddClientModal";
 import StatusFilterBar from "@/features/clients/components/StatusFilterBar";
+import MoneySummary from "@/features/clients/components/MoneySummary";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -24,6 +25,8 @@ export default function DashboardPage() {
           onClick={() => setAddOpen(true)}
         />
       </div>
+
+      {clients && clients.length > 0 && <MoneySummary clients={clients} />}
 
       <StatusFilterBar value={status} onChange={setStatus} />
 

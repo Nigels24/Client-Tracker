@@ -4,6 +4,40 @@ A running record of work done on the Client Tracker application — features add
 
 ---
 
+## 2026-08-13 — Client details, money tracking, and agreement uploads
+
+**What:** Turned a client from "a name, a note and one due date" into a full job record: separate project title and client name, school, course, project type (System / Thesis-Docu / Both), a price per deliverable, separate System and Docu deadlines, a payment history with computed balance, and an uploaded copy of the signed agreement. Added a money summary across the top of the dashboard and a Paid / Partial / Unpaid badge per client.
+
+**Why:** The project title was being crammed into the client-name field, and everything needed to actually run the business — what the job is worth, what's been collected, what's still owed, which school the student is from, what's due next — either lived in freeform notes or nowhere at all.
+
+**Files (key):**
+- `prisma/schema.prisma` — new `PROJECT_TYPE` enum; `Client` gains `title`, `school`, `course`, `projectType`, `systemPrice`, `docuPrice`, `systemDueDate`, `docuDueDate` (and `name` becomes optional, `dueDate` is dropped); new `Payment` and `ClientDocument` models cascading from `Client`.
+- `prisma/migrations/20260813215500_client_details_payments_documents/migration.sql` — hand-written so the backfill isn't lost: old `name` moves to `title`, the old `dueDate` is copied onto **both** new deadline fields, and existing rows are marked `BOTH`.
+- `lib/money.ts` — whole-peso formatting plus `totalPrice` / `totalPaid` / `balance` / `paymentStatus` / `paidProgress`; only prices matching the project type count.
+- `lib/project-type.ts` — labels, chip styles, options, and `hasSystem` / `hasDocu`.
+- `lib/status.ts` — added `clientDeadlines` and `nextDeadline`; existing `isOverdue` reused unchanged.
+- `lib/validation.ts` — shared server-side body parsers (`requiredText`, `optionalPeso`, `enumValue`, …) and `respondToError`, replacing the ad-hoc checks that were duplicated per route.
+- `lib/blob.ts` — Vercel Blob wrapper: private-first upload with a public fallback, size/type limits, best-effort delete.
+- `lib/client-include.ts` — the shared `include` so tasks, payments and documents always ship with a client; deliberately withholds each document's blob URL.
+- `app/api/payments/**`, `app/api/documents/**` — new REST routes following the existing task-route shape, including `GET /api/documents/[id]/view`, the only path by which a file reaches the browser.
+- `features/payments/`, `features/documents/` — new feature slices mirroring `features/tasks/`.
+- `features/clients/components/ClientFormFields.tsx` — the client form extracted so the add and edit modals can't drift; price and deadline fields follow the selected project type.
+- `components/ui/Badge.tsx` (new, `Chip` now builds on it), `components/ui/Modal.tsx` (`size` prop + scrolling body).
+
+**Details:**
+- Money is whole pesos as `Int` everywhere — no centavos, so totals are exact and never need rounding.
+- Switching a client from Both to Docu-only hides and stops counting the system price but doesn't erase it; switching back brings it right back.
+- A client with no price set gets no payment badge at all, rather than a misleading "Unpaid".
+- Agreements upload as **private** blobs where the plan allows it, falling back to public-with-random-suffix otherwise. Either way the raw blob URL never reaches the browser — `/api/documents/[id]/view` checks the session first, then streams or redirects.
+- Uploads are capped at 4 MB (Vercel's serverless body ceiling is 4.5 MB) and limited to PDF/JPG/PNG/WebP, checked in the browser and again on the server.
+- Deleting a client now removes its blobs before the rows cascade, so no orphaned files are left in the store.
+
+**Verified:** migration applied to a throwaway Postgres seeded to look like production (titles preserved, dates copied to both deadline fields, tasks intact, no schema drift); full API walkthrough against that scratch database covering create/update, payments, validation rejections, cross-user access (all 404), unauthenticated access (all 401), and cascade delete; `lib/money.ts` exercised directly with 18 assertions; `npm run build` and `npm run lint` clean. The blob upload path itself is untested — it needs a real `BLOB_READ_WRITE_TOKEN`.
+
+**Deployed:** Not yet — needs `npx prisma migrate deploy` against Neon **before** the code is pushed.
+
+---
+
 ## 2026-08-11 — Task filtering and pagination
 
 **What:** Added client-side filtering and pagination to the task checklist displayed on a client's detail page. Tasks can now be filtered by status (Pending / In Progress / Revisions / Done / All), and task lists are paginated at 10 items per page with Previous/Next navigation buttons.

@@ -7,10 +7,22 @@ interface ModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  size?: "md" | "lg";
   children: React.ReactNode;
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+const SIZES = {
+  md: "max-w-md",
+  lg: "max-w-2xl",
+} as const;
+
+export default function Modal({
+  open,
+  onClose,
+  title,
+  size = "md",
+  children,
+}: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -32,9 +44,9 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
         aria-modal="true"
         aria-labelledby="modal-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-2xl bg-card-bg border border-card-border shadow-xl p-6"
+        className={`flex max-h-[90vh] w-full flex-col rounded-2xl bg-card-bg border border-card-border shadow-xl ${SIZES[size]}`}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-shrink-0 items-center justify-between p-6 pb-4">
           <h2 id="modal-title" className="text-lg font-semibold">
             {title}
           </h2>
@@ -47,7 +59,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
             <X size={18} />
           </button>
         </div>
-        {children}
+        <div className="overflow-y-auto px-6 pb-6">{children}</div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import type { WORK_STATUS } from "@prisma/client";
+import type { PROJECT_TYPE, WORK_STATUS } from "@prisma/client";
 import type { Client } from "@/features/clients/types";
 import type { ClientFilters } from "@/lib/query/keys";
 
@@ -23,9 +23,16 @@ export async function fetchClient(id: number) {
 }
 
 export type CreateClientInput = {
-  name: string;
+  title: string;
+  name?: string;
+  school?: string;
+  course?: string;
   notes?: string;
-  dueDate?: string;
+  projectType?: PROJECT_TYPE;
+  systemPrice?: number;
+  docuPrice?: number;
+  systemDueDate?: string;
+  docuDueDate?: string;
 };
 
 export async function createClient(input: CreateClientInput) {
@@ -38,10 +45,17 @@ export async function createClient(input: CreateClientInput) {
 }
 
 export type UpdateClientInput = {
-  name?: string;
+  title?: string;
+  name?: string | null;
+  school?: string | null;
+  course?: string | null;
   notes?: string | null;
+  projectType?: PROJECT_TYPE;
   status?: WORK_STATUS;
-  dueDate?: string | null;
+  systemPrice?: number | null;
+  docuPrice?: number | null;
+  systemDueDate?: string | null;
+  docuDueDate?: string | null;
 };
 
 export async function updateClient(id: number, input: UpdateClientInput) {

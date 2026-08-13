@@ -22,6 +22,20 @@
 
   --overdue-bg: #fee2e2;
   --overdue-text: #b91c1c;
+
+  --type-system-bg: #e0e7ff;
+  --type-system-text: #4338ca;
+  --type-docu-bg: #fae8ff;
+  --type-docu-text: #a21caf;
+  --type-both-bg: #ccfbf1;
+  --type-both-text: #0f766e;
+
+  --pay-unpaid-bg: #ffffff;
+  --pay-unpaid-text: #b91c1c;
+  --pay-partial-bg: #ffffff;
+  --pay-partial-text: #b45309;
+  --pay-paid-bg: #ffffff;
+  --pay-paid-text: #15803d;
 }
 
 @theme inline {
@@ -42,6 +56,18 @@
   --color-status-done-text: var(--status-done-text);
   --color-overdue-bg: var(--overdue-bg);
   --color-overdue-text: var(--overdue-text);
+  --color-type-system-bg: var(--type-system-bg);
+  --color-type-system-text: var(--type-system-text);
+  --color-type-docu-bg: var(--type-docu-bg);
+  --color-type-docu-text: var(--type-docu-text);
+  --color-type-both-bg: var(--type-both-bg);
+  --color-type-both-text: var(--type-both-text);
+  --color-pay-unpaid-bg: var(--pay-unpaid-bg);
+  --color-pay-unpaid-text: var(--pay-unpaid-text);
+  --color-pay-partial-bg: var(--pay-partial-bg);
+  --color-pay-partial-text: var(--pay-partial-text);
+  --color-pay-paid-bg: var(--pay-paid-bg);
+  --color-pay-paid-text: var(--pay-paid-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

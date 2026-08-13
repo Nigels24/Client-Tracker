@@ -2,14 +2,26 @@
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { PROJECT_TYPE } from "@prisma/client";
 import Modal from "@/components/ui/Modal";
-import TextInput from "@/components/ui/TextInput";
-import TextArea from "@/components/ui/TextArea";
-import DateInput from "@/components/ui/DateInput";
 import Button from "@/components/ui/Button";
 import AlertBanner from "@/components/ui/AlertBanner";
+import ClientFormFields from "@/features/clients/components/ClientFormFields";
 import { clientSchema, ClientFormValues } from "@/features/clients/schema/client.schema";
 import { useCreateClient } from "@/features/clients/hooks/use-clients";
+
+const EMPTY_CLIENT: ClientFormValues = {
+  title: "",
+  name: "",
+  school: "",
+  course: "",
+  projectType: PROJECT_TYPE.SYSTEM,
+  systemPrice: undefined,
+  docuPrice: undefined,
+  systemDueDate: "",
+  docuDueDate: "",
+  notes: "",
+};
 
 export default function AddClientModal({
   open,
@@ -24,29 +36,37 @@ export default function AddClientModal({
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ClientFormValues>({
     resolver: yupResolver(clientSchema),
-    defaultValues: { name: "", notes: "", dueDate: "" },
+    defaultValues: EMPTY_CLIENT,
   });
 
   const handleClose = () => {
-    reset();
+    reset(EMPTY_CLIENT);
     createClient.reset();
     onClose();
   };
 
   const onSubmit = async (values: ClientFormValues) => {
     await createClient.mutateAsync({
-      name: values.name,
+      title: values.title,
+      name: values.name || undefined,
+      school: values.school || undefined,
+      course: values.course || undefined,
       notes: values.notes || undefined,
-      dueDate: values.dueDate || undefined,
+      projectType: values.projectType,
+      systemPrice: values.systemPrice,
+      docuPrice: values.docuPrice,
+      systemDueDate: values.systemDueDate || undefined,
+      docuDueDate: values.docuDueDate || undefined,
     });
     handleClose();
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Add client">
+    <Modal open={open} onClose={handleClose} title="Add client" size="lg">
       {createClient.isError && (
         <div className="mb-4">
           <AlertBanner variant="error">
@@ -55,24 +75,7 @@ export default function AddClientModal({
         </div>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <TextInput
-          label="Client name"
-          required
-          placeholder="e.g. Acme Corp"
-          registration={register("name")}
-          error={errors.name}
-        />
-        <TextArea
-          label="Notes"
-          placeholder="Requirements, scope, links…"
-          registration={register("notes")}
-          error={errors.notes}
-        />
-        <DateInput
-          label="Due date"
-          registration={register("dueDate")}
-          error={errors.dueDate}
-        />
+        <ClientFormFields register={register} errors={errors} watch={watch} />
         <div className="flex justify-end gap-2 pt-2">
           <Button label="Cancel" variant="outline" onClick={handleClose} type="button" />
           <Button

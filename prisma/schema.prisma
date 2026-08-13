@@ -18,6 +18,12 @@ enum WORK_STATUS {
   DONE
 }
 
+enum PROJECT_TYPE {
+  SYSTEM
+  DOCU
+  BOTH
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
@@ -29,16 +35,32 @@ model User {
 }
 
 model Client {
-  id        Int         @id @default(autoincrement())
-  userId    Int
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  notes     String?
-  status    WORK_STATUS @default(PENDING)
-  dueDate   DateTime?
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title  String
+  name   String?
+  school String?
+  course String?
+  notes  String?
+
+  projectType PROJECT_TYPE @default(SYSTEM)
+  status      WORK_STATUS  @default(PENDING)
+
+  // Whole pesos, never centavos. See lib/money.ts.
+  systemPrice Int?
+  docuPrice   Int?
+
+  systemDueDate DateTime?
+  docuDueDate   DateTime?
+
   tasks     Task[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  payments  Payment[]
+  documents ClientDocument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
@@ -54,6 +76,45 @@ model Task {
   position  Int         @default(0)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  @@index([clientId])
+}
+
+model Payment {
+  id       Int    @id @default(autoincrement())
+  clientId Int
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Whole pesos, never centavos. See lib/money.ts.
+  amount    Int
+  paidAt    DateTime
+  label     String?
+  method    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+model ClientDocument {
+  id       Int    @id @default(autoincrement())
+  clientId Int
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  label    String @default("Agreement")
+  fileName String
+  mimeType String
+  size     Int
+
+  // Vercel Blob. `access` records whether the blob is private (streamed back
+  // through /api/documents/[id]/view) or public (redirected to). `pathname` is
+  // what del() needs to remove the underlying file.
+  url      String
+  pathname String
+  access   String @default("private")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([clientId])
 }

@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
-import { WORK_STATUS } from "@prisma/client";
+import { clientInclude } from "@/lib/client-include";
+import {
+  enumValue,
+  optionalDate,
+  optionalPeso,
+  optionalText,
+  requiredText,
+  respondToError,
+} from "@/lib/validation";
+import { PROJECT_TYPE, WORK_STATUS } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,17 +28,13 @@ export async function GET(request: NextRequest) {
         userId: session.userId,
         ...(validStatus ? { status: validStatus } : {}),
       },
-      include: { tasks: { orderBy: { position: "asc" } } },
+      include: clientInclude,
       orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json({ message: "OK", data: clients });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { message: "Internal server error." },
-      { status: 500 }
-    );
+    return respondToError(error);
   }
 }
 
@@ -40,23 +45,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
     }
 
-    const { name, notes, dueDate } = await request.json();
-
-    if (!name || typeof name !== "string" || !name.trim()) {
-      return NextResponse.json(
-        { message: "Client name is required." },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
 
     const client = await prisma.client.create({
       data: {
         userId: session.userId,
-        name: name.trim(),
-        notes: notes || null,
-        dueDate: dueDate ? new Date(dueDate) : null,
+        title: requiredText(body.title, "Project title"),
+        name: optionalText(body.name, "Client name"),
+        school: optionalText(body.school, "School"),
+        course: optionalText(body.course, "Course"),
+        notes: optionalText(body.notes, "Notes"),
+        projectType:
+          body.projectType === undefined
+            ? PROJECT_TYPE.SYSTEM
+            : enumValue(body.projectType, PROJECT_TYPE, "project type"),
+        systemPrice: optionalPeso(body.systemPrice, "System price"),
+        docuPrice: optionalPeso(body.docuPrice, "Docu price"),
+        systemDueDate: optionalDate(body.systemDueDate, "System deadline"),
+        docuDueDate: optionalDate(body.docuDueDate, "Docu deadline"),
       },
-      include: { tasks: true },
+      include: clientInclude,
     });
 
     return NextResponse.json(
@@ -64,10 +72,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { message: "Internal server error." },
-      { status: 500 }
-    );
+    return respondToError(error);
   }
 }
