@@ -1,4 +1,4 @@
-import type { PROJECT_TYPE, WORK_STATUS } from "@prisma/client";
+import type { PAYMENT_FOR, PROJECT_TYPE, WORK_STATUS } from "@prisma/client";
 
 export type Task = {
   id: number;
@@ -20,6 +20,8 @@ export type Payment = {
   paidAt: string;
   label: string | null;
   method: string | null;
+  /** Which half of a BOTH job this pays for; null = not assigned yet. */
+  appliesTo: PAYMENT_FOR | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PAYMENT_FOR } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
+import { paymentPartFor } from "@/lib/money";
 import {
+  optionalEnumValue,
   optionalText,
   requiredDate,
   requiredPeso,
@@ -25,6 +28,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
 
     const existing = await prisma.payment.findFirst({
       where: { id: paymentId, client: { userId: session.userId } },
+      include: { client: { select: { projectType: true } } },
     });
     if (!existing) {
       return NextResponse.json({ message: "Not found." }, { status: 404 });
@@ -36,6 +40,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
       paidAt?: Date;
       label?: string | null;
       method?: string | null;
+      appliesTo?: PAYMENT_FOR | null;
     } = {};
 
     if (body.amount !== undefined) {
@@ -49,6 +54,12 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
     }
     if (body.method !== undefined) {
       data.method = optionalText(body.method, "Method");
+    }
+    if (body.appliesTo !== undefined) {
+      data.appliesTo = paymentPartFor(
+        existing.client.projectType,
+        optionalEnumValue(body.appliesTo, PAYMENT_FOR, "Applies to")
+      );
     }
 
     const payment = await prisma.payment.update({

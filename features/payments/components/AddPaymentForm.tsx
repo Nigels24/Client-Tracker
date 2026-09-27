@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { format } from "date-fns";
 import { Plus } from "lucide-react";
+import type { PAYMENT_FOR, PROJECT_TYPE } from "@prisma/client";
 import TextInput from "@/components/ui/TextInput";
 import DateInput from "@/components/ui/DateInput";
 import SelectField from "@/components/ui/SelectField";
@@ -15,21 +16,27 @@ import {
   PaymentFormValues,
 } from "@/features/payments/schema/payment.schema";
 import { useCreatePayment } from "@/features/payments/hooks/use-payments";
+import { PAYMENT_FOR_OPTIONS, paymentPartFor } from "@/lib/money";
 
 export default function AddPaymentForm({
   clientId,
+  projectType,
   isFirstPayment,
 }: {
   clientId: number;
+  projectType: PROJECT_TYPE;
   isFirstPayment: boolean;
 }) {
   const createPayment = useCreatePayment(clientId);
+  // Single-part jobs can only be paying for that part, so there's nothing to ask.
+  const asksAppliesTo = projectType === "BOTH";
 
   const defaults = (): PaymentFormValues => ({
     amount: undefined as unknown as number,
     paidAt: format(new Date(), "yyyy-MM-dd"),
     label: isFirstPayment ? "Downpayment" : "",
     method: "",
+    appliesTo: "SYSTEM",
   });
 
   const {
@@ -48,6 +55,10 @@ export default function AddPaymentForm({
       paidAt: values.paidAt,
       label: values.label || undefined,
       method: values.method || undefined,
+      appliesTo: paymentPartFor(
+        projectType,
+        (values.appliesTo || "SYSTEM") as PAYMENT_FOR
+      ),
     });
     reset(defaults());
   };
@@ -59,7 +70,11 @@ export default function AddPaymentForm({
           {(createPayment.error as Error).message}
         </AlertBanner>
       )}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+      <div
+        className={`grid grid-cols-1 gap-3 ${
+          asksAppliesTo ? "sm:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-4"
+        }`}
+      >
         <TextInput
           label="Amount (₱)"
           type="number"
@@ -86,6 +101,14 @@ export default function AddPaymentForm({
           registration={register("method")}
           error={errors.method}
         />
+        {asksAppliesTo && (
+          <SelectField
+            label="Applies to"
+            options={PAYMENT_FOR_OPTIONS}
+            registration={register("appliesTo")}
+            error={errors.appliesTo}
+          />
+        )}
       </div>
       <div className="flex justify-end">
         <Button

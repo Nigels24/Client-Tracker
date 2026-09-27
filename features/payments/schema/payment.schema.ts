@@ -20,6 +20,8 @@ export const paymentSchema = yup.object({
   paidAt: yup.string().trim().required("When was this paid?"),
   label: yup.string().trim().optional(),
   method: yup.string().trim().optional(),
+  // Only shown (and required) for BOTH clients — see AddPaymentForm.
+  appliesTo: yup.string().oneOf(["", "SYSTEM", "DOCU"]).optional(),
 });
 
 export type PaymentFormValues = yup.InferType<typeof paymentSchema>;

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PAYMENT_FOR } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/session";
+import { paymentPartFor } from "@/lib/money";
 import {
+  optionalEnumValue,
   optionalText,
   requiredDate,
   requiredPeso,
@@ -15,7 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
     }
 
-    const { clientId, amount, paidAt, label, method } = await request.json();
+    const { clientId, amount, paidAt, label, method, appliesTo } = await request.json();
 
     const parsedClientId = Number(clientId);
     if (!Number.isInteger(parsedClientId)) {
@@ -39,6 +42,10 @@ export async function POST(request: NextRequest) {
         paidAt: requiredDate(paidAt, "Payment date"),
         label: optionalText(label, "Label"),
         method: optionalText(method, "Method"),
+        appliesTo: paymentPartFor(
+          client.projectType,
+          optionalEnumValue(appliesTo, PAYMENT_FOR, "Applies to")
+        ),
       },
     });
 

@@ -1,3 +1,4 @@
+import type { PAYMENT_FOR } from "@prisma/client";
 import type { Payment } from "@/features/clients/types";
 
 async function unwrap<T>(response: Response): Promise<T> {
@@ -15,6 +16,7 @@ export type CreatePaymentInput = {
   paidAt: string;
   label?: string;
   method?: string;
+  appliesTo?: PAYMENT_FOR | null;
 };
 
 export async function createPayment(input: CreatePaymentInput) {
@@ -31,6 +33,7 @@ export type UpdatePaymentInput = {
   paidAt?: string;
   label?: string | null;
   method?: string | null;
+  appliesTo?: PAYMENT_FOR | null;
 };
 
 export async function updatePayment(id: number, input: UpdatePaymentInput) {

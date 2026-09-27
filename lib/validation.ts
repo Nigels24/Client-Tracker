@@ -108,3 +108,13 @@ export function enumValue<T extends Record<string, string>>(
   }
   return value as T[keyof T];
 }
+
+/** Like `enumValue`, but null/undefined/"" mean "not set" and parse to null. */
+export function optionalEnumValue<T extends Record<string, string>>(
+  value: unknown,
+  options: T,
+  field: string
+): T[keyof T] | null {
+  if (value === null || value === undefined || value === "") return null;
+  return enumValue(value, options, field);
+}

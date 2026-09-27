@@ -24,6 +24,12 @@ enum PROJECT_TYPE {
   BOTH
 }
 
+// Which half of a BOTH job a payment counts toward. Null = not assigned yet.
+enum PAYMENT_FOR {
+  SYSTEM
+  DOCU
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
@@ -106,6 +112,7 @@ model Payment {
   paidAt    DateTime
   label     String?
   method    String?
+  appliesTo PAYMENT_FOR?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

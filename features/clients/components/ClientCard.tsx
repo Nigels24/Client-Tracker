@@ -9,11 +9,31 @@ import {
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_STYLES,
   formatPeso,
+  partBalance,
   paymentStatus,
   totalPaid,
   totalPrice,
 } from "@/lib/money";
 import type { Client } from "@/features/clients/types";
+
+/** "Sys left ₱12,000" — red while something is owed, "paid" once it isn't. */
+function PartLeft({ label, remaining }: { label: string; remaining: number }) {
+  if (remaining > 0) {
+    return (
+      <span>
+        {label} left <span className="text-overdue-text">{formatPeso(remaining)}</span>
+      </span>
+    );
+  }
+  if (remaining < 0) {
+    return (
+      <span>
+        {label} overpaid {formatPeso(-remaining)}
+      </span>
+    );
+  }
+  return <span>{label} paid</span>;
+}
 
 export default function ClientCard({ client }: { client: Client }) {
   const total = client.tasks.length;
@@ -68,6 +88,13 @@ export default function ClientCard({ client }: { client: Client }) {
         <p className="mt-3 text-sm text-foreground">
           <span className="font-semibold">{formatPeso(totalPaid(client))}</span>
           <span className="text-muted"> / {formatPeso(price)}</span>
+        </p>
+      )}
+      {price > 0 && client.projectType === "BOTH" && (
+        <p className="mt-0.5 text-xs text-muted">
+          <PartLeft label="Sys" remaining={partBalance(client, "SYSTEM")} />
+          {" · "}
+          <PartLeft label="Docu" remaining={partBalance(client, "DOCU")} />
         </p>
       )}
 
